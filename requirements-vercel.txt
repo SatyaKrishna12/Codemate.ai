@@ -1,0 +1,24 @@
+# Core FastAPI
+fastapi==0.104.1
+uvicorn==0.24.0
+
+# AI/ML Core
+groq==0.4.1
+openai==1.12.0
+
+# Text Processing (lightweight versions)
+spacy==3.7.2
+nltk==3.8.1
+
+# File Processing
+python-multipart==0.0.6
+aiofiles==23.2.1
+
+# Data Processing
+pandas==2.1.4
+numpy==1.25.2
+
+# Basic dependencies only - remove heavy ML libraries for serverless
+# sentence-transformers  # Too large for serverless
+# torch  # Too large for serverless
+# transformers  # Too large for serverless

@@ -141,6 +141,8 @@ uploads/
 *.md
 !README.md
 !requirements.txt
+!requirements-vercel.txt
+!VERCEL_DEPLOYMENT.md
 
 # IDE
 .vscode/

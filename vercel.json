@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "main_vercel.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/main_vercel.py"
+    }
+  ],
+  "env": {
+    "GROQ_API_KEY": "@groq_api_key"
+  },
+  "functions": {
+    "main_vercel.py": {
+      "maxDuration": 30
+    }
+  },
+  "install": {
+    "requirements": "requirements-vercel.txt"
+  }
+}

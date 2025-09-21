@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Researcher Agent - Chat Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            display: flex;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            background: #6c5ce7;
+            color: white;
+        }
+
+        .sidebar-header h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .session-info {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .session-status {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #28a745;
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .upload-section {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed #6c5ce7;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .file-input:hover {
+            background: #e9ecef;
+            border-color: #5a52d5;
+        }
+
+        .file-input input {
+            display: none;
+        }
+
+        .uploaded-docs-section {
+            padding: 20px 20px 30px 20px;
+            border-bottom: 1px solid #e9ecef;
+            background: #f8f9fa;
+        }
+
+        .uploaded-docs-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .doc-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .doc-item:hover {
+            border-color: #6c5ce7;
+            box-shadow: 0 2px 4px rgba(108, 92, 231, 0.1);
+        }
+
+        .doc-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+
+        .doc-icon {
+            font-size: 20px;
+            margin-right: 10px;
+        }
+
+        .doc-details {
+            flex: 1;
+        }
+
+        .doc-name {
+            font-weight: 500;
+            color: #2d3436;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .doc-meta {
+            font-size: 12px;
+            color: #636e72;
+        }
+
+        .doc-status {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .doc-status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .doc-status.processing {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .doc-status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            background: #fff;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            color: #2d3436;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            color: #636e72;
+            font-size: 14px;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .message.assistant {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .message.user .message-content {
+            background: #6c5ce7;
+            color: white;
+        }
+
+        .message.assistant .message-content {
+            background: white;
+            color: #2d3436;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-time {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .input-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .message-input:focus {
+            border-color: #6c5ce7;
+        }
+
+        .send-button {
+            padding: 15px 25px;
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: #5a52d5;
+            transform: translateY(-2px);
+        }
+
+        .send-button:disabled {
+            background: #ddd;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            color: #636e72;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+
+        .typing-indicator.show {
+            display: flex;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #636e72;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.5;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background: #28a745;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+        }
+
+        .status-indicator.error {
+            background: #dc3545;
+        }
+
+        .clear-button {
+            width: 100%;
+            padding: 10px;
+            background: #fd79a8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .clear-button:hover {
+            background: #e84393;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="status-indicator" id="statusIndicator">🟢 Connected</div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>🧠 AI Research Assistant</h2>
+                <p>Upload documents and ask questions</p>
+            </div>
+            
+            <div class="session-info">
+                <p><strong>Session Status:</strong></p>
+                <span class="session-status" id="sessionStatus">Initializing...</span>
+            </div>
+            
+            <div class="upload-section">
+                <h3 style="margin-bottom: 15px; font-size: 16px;">📁 Upload Documents</h3>
+                <div class="file-input-wrapper">
+                    <div class="file-input" onclick="document.getElementById('fileInput').click()">
+                        <input type="file" id="fileInput" accept=".pdf,.docx,.txt,.md" multiple>
+                        📎 Click to upload files<br>
+                        <small style="color: #666;">PDF, DOCX, TXT, MD</small>
+                    </div>
+                </div>
+                <button class="clear-button" onclick="clearChat()">🗑️ Clear Chat</button>
+            </div>
+
+            <!-- Uploaded Documents Section -->
+            <div class="uploaded-docs-section" id="uploadedDocsSection" style="display: none;">
+                <h3 style="margin-bottom: 15px; font-size: 16px;">📂 Uploaded Documents</h3>
+                <div class="uploaded-docs-list" id="uploadedDocsList">
+                    <!-- Documents will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-chat">
+            <div class="chat-header">
+                <h1>Deep Researcher Agent</h1>
+                <p>Ask questions about your documents or get research assistance</p>
+            </div>
+            
+            <div class="messages-container" id="messagesContainer">
+                <div class="message assistant">
+                    <div class="message-content">
+                        <div>👋 Hello! I'm your AI Research Assistant. I can help you:</div>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>Analyze uploaded documents</li>
+                            <li>Answer questions about your content</li>
+                            <li>Provide research insights</li>
+                            <li>Synthesize information from multiple sources</li>
+                        </ul>
+                        <div>Upload some documents or ask me anything to get started!</div>
+                        <div class="message-time" id="welcomeTime"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="typing-indicator" id="typingIndicator">
+                <span>AI is thinking</span>
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+            
+            <div class="input-container">
+                <form class="input-form" onsubmit="sendMessage(event)">
+                    <input 
+                        type="text" 
+                        class="message-input" 
+                        id="messageInput" 
+                        placeholder="Ask about your documents or research topics..."
+                        autocomplete="off"
+                    >
+                    <button type="submit" class="send-button" id="sendButton">
+                        Send 🚀
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = null;
+        let uploadedDocuments = []; // Track uploaded documents
+        const API_BASE = 'http://localhost:8000/api/v1/researcher';
+        console.log('Upload URL will be:', `${API_BASE}/upload`); // Debug log
+        
+        // Initialize the application
+        async function init() {
+            try {
+                await startSession();
+                setupFileUpload();
+                updateWelcomeTime();
+                updateStatus('🟢 Connected', false);
+            } catch (error) {
+                console.error('Initialization failed:', error);
+                updateStatus('🔴 Connection Failed', true);
+            }
+        }
+        
+        async function startSession() {
+            try {
+                const response = await fetch(`${API_BASE}/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!response.ok) throw new Error('Failed to start session');
+                
+                const data = await response.json();
+                sessionId = data.session_id;
+                
+                document.getElementById('sessionStatus').textContent = `Active (${sessionId.slice(0, 8)}...)`;
+                document.getElementById('sessionStatus').style.background = '#28a745';
+                
+                console.log('Session started:', sessionId);
+            } catch (error) {
+                throw new Error(`Session start failed: ${error.message}`);
+            }
+        }
+        
+        async function sendMessage(event) {
+            event.preventDefault();
+            
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message || !sessionId) return;
+            
+            // Add user message to chat
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Show typing indicator
+            showTyping(true);
+            
+            // Disable send button
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = true;
+            sendButton.textContent = 'Sending...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/chat-simple`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        message: message
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to send message');
+                
+                const data = await response.json();
+                const aiResponse = data.content || data.response || data.message || 'Sorry, I could not process your request.';
+                
+                // Add AI response to chat
+                addMessage(aiResponse, 'assistant');
+                
+            } catch (error) {
+                console.error('Send message error:', error);
+                addMessage('❌ Sorry, I encountered an error. Please try again.', 'assistant');
+                updateStatus('🟡 Connection Issue', true);
+            } finally {
+                showTyping(false);
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send 🚀';
+            }
+        }
+        
+        function addMessage(content, type) {
+            const container = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <div>${formatMessage(content)}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function formatMessage(content) {
+            return content
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>')
+                .replace(/^[•\-]\s+(.+)$/gm, '<li>$1</li>');
+        }
+        
+        function showTyping(show) {
+            const indicator = document.getElementById('typingIndicator');
+            if (show) {
+                indicator.classList.add('show');
+            } else {
+                indicator.classList.remove('show');
+            }
+        }
+
+        // Document management functions
+        function addDocumentToList(fileName, fileSize, status = 'processing') {
+            const doc = {
+                id: Date.now() + Math.random(),
+                name: fileName,
+                size: fileSize,
+                status: status,
+                uploadTime: new Date()
+            };
+            
+            uploadedDocuments.push(doc);
+            updateDocumentsList();
+            
+            return doc.id;
+        }
+
+        function updateDocumentStatus(fileName, status) {
+            const doc = uploadedDocuments.find(d => d.name === fileName);
+            if (doc) {
+                doc.status = status;
+                updateDocumentsList();
+            }
+        }
+
+        function updateDocumentsList() {
+            const section = document.getElementById('uploadedDocsSection');
+            const list = document.getElementById('uploadedDocsList');
+            
+            if (uploadedDocuments.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            
+            section.style.display = 'block';
+            
+            list.innerHTML = uploadedDocuments.map(doc => {
+                const fileIcon = getFileIcon(doc.name);
+                const sizeText = formatFileSize(doc.size);
+                const statusClass = doc.status === 'success' ? 'success' : 
+                                  doc.status === 'error' ? 'error' : 'processing';
+                const statusText = doc.status === 'success' ? 'Processed' :
+                                 doc.status === 'error' ? 'Failed' : 'Processing...';
+                
+                return `
+                    <div class="doc-item">
+                        <div class="doc-info">
+                            <div class="doc-icon">${fileIcon}</div>
+                            <div class="doc-details">
+                                <div class="doc-name">${doc.name}</div>
+                                <div class="doc-meta">${sizeText} • ${doc.uploadTime.toLocaleTimeString()}</div>
+                            </div>
+                        </div>
+                        <div class="doc-status ${statusClass}">${statusText}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getFileIcon(fileName) {
+            const extension = fileName.split('.').pop().toLowerCase();
+            switch (extension) {
+                case 'pdf': return '📄';
+                case 'docx': case 'doc': return '📝';
+                case 'txt': return '📃';
+                case 'md': return '📋';
+                default: return '📄';
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function clearDocuments() {
+            uploadedDocuments = [];
+            updateDocumentsList();
+        }
+        
+        function setupFileUpload() {
+            const fileInput = document.getElementById('fileInput');
+            fileInput.addEventListener('change', handleFileUpload);
+        }
+        
+        async function handleFileUpload(event) {
+            const files = event.target.files;
+            if (!files.length || !sessionId) return;
+            
+            for (const file of files) {
+                let docId = null;
+                try {
+                    addMessage(`📎 Uploading: ${file.name}...`, 'user');
+                    
+                    // Add document to the list with processing status
+                    docId = addDocumentToList(file.name, file.size, 'processing');
+                    
+                    const formData = new FormData();
+                    formData.append('files', file);  // Changed from 'file' to 'files'
+                    formData.append('session_id', sessionId);
+                    formData.append('message', `Please analyze the uploaded document: ${file.name}`);
+                    
+                    console.log('Uploading to URL:', `${API_BASE}/upload`); // Debug log
+                    const response = await fetch(`${API_BASE}/upload`, {  // Correct API path
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`Upload failed: ${errorData.detail || response.statusText}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    // Update document status to success
+                    updateDocumentStatus(file.name, 'success');
+                    
+                    addMessage(`✅ Successfully uploaded and processed: ${file.name}`, 'assistant');
+                    
+                    // Show the AI's response about the uploaded document
+                    if (result.content) {
+                        addMessage(result.content, 'assistant');
+                    }
+                    
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    
+                    // Update document status to error
+                    if (docId) {
+                        updateDocumentStatus(file.name, 'error');
+                    }
+                    
+                    addMessage(`❌ Failed to upload: ${file.name}. Error: ${error.message}`, 'assistant');
+                }
+            }
+            
+            // Clear file input
+            event.target.value = '';
+        }
+        
+        function clearChat() {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = `
+                <div class="message assistant">
+                    <div class="message-content">
+                        <div>👋 Chat cleared! How can I help you?</div>
+                        <div class="message-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                    </div>
+                </div>
+            `;
+            
+            // Also clear the uploaded documents
+            clearDocuments();
+        }
+        
+        function updateStatus(text, isError) {
+            const indicator = document.getElementById('statusIndicator');
+            indicator.textContent = text;
+            indicator.className = 'status-indicator' + (isError ? ' error' : '');
+        }
+        
+        function updateWelcomeTime() {
+            const welcomeTime = document.getElementById('welcomeTime');
+            if (welcomeTime) {
+                welcomeTime.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+        }
+        
+        // Enter key support
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(e);
+            }
+        });
+        
+        // Initialize when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
