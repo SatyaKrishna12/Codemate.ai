@@ -242,3 +242,6 @@ Temporary Items
 # Test files
 test_upload.html
 sample.pdf
+
+*.md
+!README.md

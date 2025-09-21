@@ -47,5 +47,6 @@
   ],
   "env": {
     "ENVIRONMENT": "production"
-  }
+  },
+  "installCommand": "pip install -r requirements-vercel.txt"
 }
