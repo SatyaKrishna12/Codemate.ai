@@ -1,35 +1,7 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "test_vercel.py",
-      "use": "@vercel/python",
-      "config": {
-        "runtime": "python3.9",
-        "maxLambdaSize": "50mb"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/test_vercel.py"
-    },
-    {
-      "src": "/test",
-      "dest": "/test_vercel.py"
-    },
-    {
-      "src": "/",
-      "dest": "/test_vercel.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/test_vercel.py"
-    }
-  ],
   "functions": {
-    "test_vercel.py": {
+    "api/*.py": {
       "runtime": "python3.9"
     }
   }
