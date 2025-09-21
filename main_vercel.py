@@ -84,9 +84,48 @@ async def conduct_research(query: str, depth: str = "deep") -> Dict[str, Any]:
         }
 
 # Root endpoint
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    return {"message": "Deep Researcher Agent API", "status": "active", "version": "1.0.0"}
+    try:
+        # Serve the main HTML page
+        with open("static/index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        return HTMLResponse(content="""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Deep Researcher Agent</title>
+        </head>
+        <body>
+            <h1>Deep Researcher Agent API</h1>
+            <p>Status: Active</p>
+            <p>Version: 1.0.0</p>
+            <div>
+                <a href="/docs">API Documentation</a> | 
+                <a href="/health">Health Check</a>
+            </div>
+        </body>
+        </html>
+        """)
+
+# Chat interface endpoint
+@app.get("/chat", response_class=HTMLResponse)
+async def chat_interface():
+    try:
+        with open("static/chat_interface.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>Chat interface not found</h1>")
+
+# Dashboard endpoint (if exists)
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard():
+    try:
+        with open("static/dashboard.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>Dashboard not found</h1>")
 
 # Health check
 @app.get("/health")

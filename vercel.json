@@ -1,51 +1,15 @@
 {
   "version": 2,
-  "name": "deep-researcher-agent-v2",
   "builds": [
     {
       "src": "main_vercel.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "50mb",
-        "runtime": "python3.9"
-      }
+      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/main_vercel.py"
-    },
-    {
-      "src": "/health",
-      "dest": "/main_vercel.py"
-    },
-    {
-      "src": "/docs",
-      "dest": "/main_vercel.py"
-    },
-    {
-      "src": "/openapi.json",
-      "dest": "/main_vercel.py"
-    },
-    {
-      "src": "/chat",
-      "dest": "/static/chat_interface.html"
-    },
-    {
-      "src": "/dashboard",
-      "dest": "/static/dashboard.html"
-    },
-    {
-      "src": "/",
-      "dest": "/static/index.html"
-    },
-    {
       "src": "/(.*)",
       "dest": "/main_vercel.py"
     }
-  ],
-  "env": {
-    "ENVIRONMENT": "production"
-  }
+  ]
 }
