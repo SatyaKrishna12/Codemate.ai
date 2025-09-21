@@ -1,22 +1,16 @@
-# Core FastAPI
+# Core FastAPI - lighter versions for Vercel
 fastapi==0.104.1
+pydantic==2.5.0
 uvicorn==0.24.0
 
-# AI/ML Core
+# Minimal AI dependencies
 groq==0.4.1
-openai==1.12.0
 
-# Text Processing (lightweight versions)
-spacy==3.7.2
-nltk==3.8.1
-
-# File Processing
+# Basic file handling
 python-multipart==0.0.6
-aiofiles==23.2.1
 
-# Data Processing
-pandas==2.1.4
-numpy==1.25.2
+# Optional lightweight dependencies
+aiofiles==23.2.1
 
 # Basic dependencies only - remove heavy ML libraries for serverless
 # sentence-transformers  # Too large for serverless
