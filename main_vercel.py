@@ -87,54 +87,118 @@ async def conduct_research(query: str, depth: str = "deep") -> Dict[str, Any]:
 @app.get("/", response_class=HTMLResponse)
 async def root():
     try:
-        # Serve the main HTML page
-        with open("static/index.html", "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    except FileNotFoundError:
-        return HTMLResponse(content="""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Deep Researcher Agent</title>
-        </head>
-        <body>
-            <h1>Deep Researcher Agent API</h1>
-            <p>Status: Active</p>
-            <p>Version: 1.0.0</p>
-            <div>
-                <a href="/docs">API Documentation</a> | 
+        # Try to serve the HTML file
+        import os
+        static_path = os.path.join(os.path.dirname(__file__), "static", "index.html")
+        if os.path.exists(static_path):
+            with open(static_path, "r", encoding="utf-8") as f:
+                return HTMLResponse(content=f.read())
+        else:
+            # Fallback if file not found
+            return HTMLResponse(content=get_fallback_html())
+    except Exception as e:
+        print(f"Error serving root: {e}")
+        return HTMLResponse(content=get_fallback_html())
+
+def get_fallback_html():
+    return """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Deep Researcher Agent</title>
+        <style>
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+            .container { text-align: center; }
+            .status { color: green; font-weight: bold; }
+            .links { margin: 20px 0; }
+            .links a { margin: 0 10px; padding: 10px 20px; background: #007cba; color: white; text-decoration: none; border-radius: 5px; }
+            .links a:hover { background: #005a87; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🔬 Deep Researcher Agent</h1>
+            <p class="status">✅ API Status: Active</p>
+            <p>Version: 1.0.0 | Environment: Serverless</p>
+            
+            <div class="links">
                 <a href="/health">Health Check</a>
+                <a href="/docs">API Documentation</a>
+                <a href="/api/status">API Status</a>
             </div>
-        </body>
-        </html>
-        """)
+            
+            <h3>Available Endpoints:</h3>
+            <ul style="text-align: left; display: inline-block;">
+                <li><strong>GET /</strong> - This page</li>
+                <li><strong>GET /health</strong> - Health check</li>
+                <li><strong>POST /api/chat</strong> - Chat with AI</li>
+                <li><strong>POST /api/upload</strong> - Upload documents</li>
+                <li><strong>GET /api/documents</strong> - List documents</li>
+                <li><strong>GET /api/status</strong> - System status</li>
+            </ul>
+        </div>
+    </body>
+    </html>
+    """
 
 # Chat interface endpoint
 @app.get("/chat", response_class=HTMLResponse)
 async def chat_interface():
     try:
-        with open("static/chat_interface.html", "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    except FileNotFoundError:
-        return HTMLResponse(content="<h1>Chat interface not found</h1>")
+        import os
+        static_path = os.path.join(os.path.dirname(__file__), "static", "chat_interface.html")
+        if os.path.exists(static_path):
+            with open(static_path, "r", encoding="utf-8") as f:
+                return HTMLResponse(content=f.read())
+        else:
+            return HTMLResponse(content="<h1>Chat interface not available in serverless mode</h1><p><a href='/'>Back to Home</a></p>")
+    except Exception as e:
+        print(f"Error serving chat: {e}")
+        return HTMLResponse(content="<h1>Chat interface error</h1><p><a href='/'>Back to Home</a></p>")
 
 # Dashboard endpoint (if exists)
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard():
     try:
-        with open("static/dashboard.html", "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    except FileNotFoundError:
-        return HTMLResponse(content="<h1>Dashboard not found</h1>")
+        import os
+        static_path = os.path.join(os.path.dirname(__file__), "static", "dashboard.html")
+        if os.path.exists(static_path):
+            with open(static_path, "r", encoding="utf-8") as f:
+                return HTMLResponse(content=f.read())
+        else:
+            return HTMLResponse(content="<h1>Dashboard not available in serverless mode</h1><p><a href='/'>Back to Home</a></p>")
+    except Exception as e:
+        print(f"Error serving dashboard: {e}")
+        return HTMLResponse(content="<h1>Dashboard error</h1><p><a href='/'>Back to Home</a></p>")
 
 # Health check
 @app.get("/health")
 async def health_check():
+    try:
+        return {
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "environment": os.getenv("ENVIRONMENT", "production"),
+            "groq_available": bool(GROQ_API_KEY),
+            "python_version": os.sys.version,
+            "app_status": "running"
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+# Simple test endpoint
+@app.get("/test")
+async def test_endpoint():
     return {
-        "status": "healthy",
+        "message": "Test endpoint working",
         "timestamp": datetime.now().isoformat(),
-        "environment": os.getenv("ENVIRONMENT", "production"),
-        "groq_available": bool(GROQ_API_KEY)
+        "status": "ok"
     }
 
 # Chat endpoint
