@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Researcher Agent - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #6c5ce7, #fd79a8);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .card-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .card h3 {
+            color: #2d3436;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .card p {
+            color: #636e72;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .card-button {
+            display: inline-block;
+            padding: 12px 25px;
+            background: #6c5ce7;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .card-button:hover {
+            background: #5a52d5;
+            transform: translateY(-2px);
+        }
+
+        .status-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .status-item {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+
+        .status-item.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-item.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-item h4 {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .status-indicator {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .api-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .api-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .api-endpoint {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #6c5ce7;
+        }
+
+        .api-endpoint h4 {
+            color: #2d3436;
+            margin-bottom: 10px;
+        }
+
+        .api-method {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .api-method.get { background: #28a745; color: white; }
+        .api-method.post { background: #007bff; color: white; }
+        .api-method.put { background: #ffc107; color: black; }
+        .api-method.delete { background: #dc3545; color: white; }
+
+        .api-url {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .test-button {
+            padding: 8px 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s ease;
+        }
+
+        .test-button:hover {
+            background: #218838;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Deep Researcher Agent</h1>
+            <p>AI-Powered Document Analysis & Research Assistant</p>
+        </div>
+
+        <div class="status-section">
+            <h2 style="margin-bottom: 20px; color: #2d3436;">📊 System Status</h2>
+            <div class="status-grid" id="statusGrid">
+                <div class="status-item" id="backendStatus">
+                    <div class="status-indicator">⏳</div>
+                    <h4>Backend API</h4>
+                    <p>Checking...</p>
+                </div>
+                <div class="status-item" id="synthesisStatus">
+                    <div class="status-indicator">⏳</div>
+                    <h4>Synthesis Service</h4>
+                    <p>Checking...</p>
+                </div>
+                <div class="status-item" id="researcherStatus">
+                    <div class="status-indicator">⏳</div>
+                    <h4>Research Agent</h4>
+                    <p>Checking...</p>
+                </div>
+                <div class="status-item" id="uploadStatus">
+                    <div class="status-indicator">⏳</div>
+                    <h4>File Upload</h4>
+                    <p>Checking...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-icon">💬</div>
+                <h3>Chat Interface</h3>
+                <p>Interactive chat interface to communicate with the AI researcher. Upload documents and ask questions in natural language.</p>
+                <a href="chat_interface.html" class="card-button">Open Chat 🚀</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📚</div>
+                <h3>API Documentation</h3>
+                <p>Comprehensive API documentation with interactive testing capabilities. Explore all available endpoints and their parameters.</p>
+                <a href="http://localhost:8000/docs" target="_blank" class="card-button">View Docs 📖</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🔍</div>
+                <h3>Health Check</h3>
+                <p>Monitor system health and verify all services are running correctly. Get real-time status updates.</p>
+                <a href="http://localhost:8000/api/v1/researcher/health" target="_blank" class="card-button">Check Health ✅</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📄</div>
+                <h3>Document Processing</h3>
+                <p>Upload and process various document formats including PDF, DOCX, TXT, and Markdown files for analysis.</p>
+                <a href="javascript:void(0)" onclick="testUpload()" class="card-button">Test Upload 📤</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🤖</div>
+                <h3>AI Research Assistant</h3>
+                <p>Advanced AI-powered research capabilities with document analysis, question answering, and synthesis.</p>
+                <a href="javascript:void(0)" onclick="testResearch()" class="card-button">Test Research 🔬</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">⚡</div>
+                <h3>Quick Synthesis</h3>
+                <p>Fast document synthesis and information extraction using advanced language models.</p>
+                <a href="javascript:void(0)" onclick="testSynthesis()" class="card-button">Test Synthesis ⚡</a>
+            </div>
+        </div>
+
+        <div class="api-section">
+            <h2 style="margin-bottom: 20px; color: #2d3436;">🔌 API Endpoints</h2>
+            <div class="api-grid">
+                <div class="api-endpoint">
+                    <h4>Health Check</h4>
+                    <div class="api-method get">GET</div>
+                    <div class="api-url">/api/v1/researcher/health</div>
+                    <p>Check system health and status</p>
+                    <button class="test-button" onclick="testEndpoint('/api/v1/researcher/health', 'GET')">Test</button>
+                </div>
+
+                <div class="api-endpoint">
+                    <h4>Start Session</h4>
+                    <div class="api-method post">POST</div>
+                    <div class="api-url">/api/v1/researcher/start</div>
+                    <p>Initialize a new research session</p>
+                    <button class="test-button" onclick="testEndpoint('/api/v1/researcher/start', 'POST')">Test</button>
+                </div>
+
+                <div class="api-endpoint">
+                    <h4>Simple Chat</h4>
+                    <div class="api-method post">POST</div>
+                    <div class="api-url">/api/v1/researcher/chat-simple</div>
+                    <p>Send messages to the AI researcher</p>
+                    <button class="test-button" onclick="testChat()">Test</button>
+                </div>
+
+                <div class="api-endpoint">
+                    <h4>Upload Document</h4>
+                    <div class="api-method post">POST</div>
+                    <div class="api-url">/api/v1/researcher/upload</div>
+                    <p>Upload documents for analysis</p>
+                    <button class="test-button" onclick="alert('Use the Document Processing card above to test uploads')">Test</button>
+                </div>
+
+                <div class="api-endpoint">
+                    <h4>Synthesis Demo</h4>
+                    <div class="api-method get">GET</div>
+                    <div class="api-url">/api/v1/synthesis/demo</div>
+                    <p>Demo synthesis capabilities</p>
+                    <button class="test-button" onclick="testEndpoint('/api/v1/synthesis/demo', 'GET')">Test</button>
+                </div>
+
+                <div class="api-endpoint">
+                    <h4>Quick Synthesis</h4>
+                    <div class="api-method post">POST</div>
+                    <div class="api-url">/api/v1/synthesis/quick</div>
+                    <p>Perform quick document synthesis</p>
+                    <button class="test-button" onclick="testQuickSynthesis()">Test</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2025 Deep Researcher Agent | AI-Powered Research Assistant</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        
+        // Check system status on load
+        window.addEventListener('load', async () => {
+            await checkSystemStatus();
+        });
+
+        async function checkSystemStatus() {
+            // Check backend health
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/researcher/health`);
+                if (response.ok) {
+                    updateStatusItem('backendStatus', true, 'Backend API', 'Running');
+                } else {
+                    updateStatusItem('backendStatus', false, 'Backend API', 'Error');
+                }
+            } catch (error) {
+                updateStatusItem('backendStatus', false, 'Backend API', 'Offline');
+            }
+
+            // Check synthesis service
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/synthesis/health`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'healthy') {
+                        updateStatusItem('synthesisStatus', true, 'Synthesis Service', 'Available');
+                    } else {
+                        updateStatusItem('synthesisStatus', false, 'Synthesis Service', 'Error');
+                    }
+                } else {
+                    updateStatusItem('synthesisStatus', false, 'Synthesis Service', 'Error');
+                }
+            } catch (error) {
+                updateStatusItem('synthesisStatus', false, 'Synthesis Service', 'Unavailable');
+            }
+
+            // Check researcher agent
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/researcher/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (response.ok) {
+                    updateStatusItem('researcherStatus', true, 'Research Agent', 'Ready');
+                } else {
+                    updateStatusItem('researcherStatus', false, 'Research Agent', 'Error');
+                }
+            } catch (error) {
+                updateStatusItem('researcherStatus', false, 'Research Agent', 'Unavailable');
+            }
+
+            // Upload is always available if backend is running
+            const backendRunning = document.getElementById('backendStatus').classList.contains('active');
+            updateStatusItem('uploadStatus', backendRunning, 'File Upload', backendRunning ? 'Ready' : 'Unavailable');
+        }
+
+        function updateStatusItem(id, isActive, title, status) {
+            const item = document.getElementById(id);
+            item.className = `status-item ${isActive ? 'active' : 'inactive'}`;
+            item.innerHTML = `
+                <div class="status-indicator">${isActive ? '✅' : '❌'}</div>
+                <h4>${title}</h4>
+                <p>${status}</p>
+            `;
+        }
+
+        async function testEndpoint(endpoint, method = 'GET') {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.text();
+                alert(`Response (${response.status}):\n${data.substring(0, 500)}${data.length > 500 ? '...' : ''}`);
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        async function testChat() {
+            try {
+                // First start a session
+                const sessionResponse = await fetch(`${API_BASE}/api/v1/researcher/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!sessionResponse.ok) throw new Error('Failed to start session');
+                
+                const sessionData = await sessionResponse.json();
+                const sessionId = sessionData.session_id;
+                
+                // Then send a test message
+                const chatResponse = await fetch(`${API_BASE}/api/v1/researcher/chat-simple`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        message: 'Hello! This is a test message.'
+                    })
+                });
+                
+                if (!chatResponse.ok) throw new Error('Chat request failed');
+                
+                const chatData = await chatResponse.json();
+                alert(`Chat Test Successful!\n\nResponse: ${chatData.content || chatData.response || JSON.stringify(chatData)}`);
+                
+            } catch (error) {
+                alert(`Chat Test Error: ${error.message}`);
+            }
+        }
+
+        async function testQuickSynthesis() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/synthesis/quick`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: 'What are the benefits of artificial intelligence?',
+                        sources: [
+                            'AI improves efficiency and automation in various industries.',
+                            'Machine learning helps in data analysis and prediction.',
+                            'AI assists in medical diagnosis and treatment planning.'
+                        ]
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Synthesis request failed');
+                
+                const data = await response.json();
+                alert(`Synthesis Test Successful!\n\nResult: ${data.synthesis || data.result || JSON.stringify(data)}`);
+                
+            } catch (error) {
+                alert(`Synthesis Test Error: ${error.message}`);
+            }
+        }
+
+        function testUpload() {
+            alert('To test document upload:\n\n1. Use the Chat Interface\n2. Click the file upload area\n3. Select a PDF, DOCX, TXT, or MD file\n4. The file will be processed automatically\n\nYou can then ask questions about the uploaded document!');
+        }
+
+        function testResearch() {
+            window.open('chat_interface.html', '_blank');
+        }
+
+        function testSynthesis() {
+            testQuickSynthesis();
+        }
+    </script>
+</body>
+</html>
