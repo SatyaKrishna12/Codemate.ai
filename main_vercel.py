@@ -420,7 +420,10 @@ async def catch_all(path: str):
         ]
     }
 
-# Vercel handler
+# Vercel handler - This is the entry point for Vercel
+handler = app
+
+# Alternative Vercel handlers (for compatibility)
 app_handler = app
 
 # Optional: Local development server
