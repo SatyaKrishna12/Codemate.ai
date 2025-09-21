@@ -1,129 +1,118 @@
 """
-Vercel-compatible FastAPI application for Deep Researcher Agent
+Vercel serverless function for Deep Researcher Agent
 """
-import os
+from http.server import BaseHTTPRequestHandler
 import json
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from urllib.parse import urlparse, parse_qs
 
-from fastapi import FastAPI, HTTPException, File, UploadFile, Request, Form
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel
-
-# Initialize FastAPI app
-app = FastAPI(
-    title="Deep Researcher Agent API",
-    description="Serverless research agent powered by Groq AI",
-    version="1.0.0"
-)
-
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Pydantic models
-class ChatMessage(BaseModel):
-    message: str
-    chat_id: Optional[str] = None
-
-class ResearchQuery(BaseModel):
-    query: str
-    depth: str = "deep"
-
-# In-memory storage for serverless
-chat_sessions = {}
-uploaded_documents = {}
-
-# Basic routes
-@app.get("/")
-async def root():
-    """Root endpoint"""
-    return {
-        "message": "Deep Researcher Agent API",
-        "status": "active",
-        "timestamp": datetime.now().isoformat(),
-        "version": "1.0.0",
-        "endpoints": [
-            "/",
-            "/health",
-            "/api/health",
-            "/test"
-        ]
-    }
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "service": "Deep Researcher Agent",
-        "environment": os.getenv("VERCEL_ENV", "development")
-    }
-
-@app.get("/api/health")
-async def api_health():
-    """API health check"""
-    return await health_check()
-
-@app.get("/test")
-async def test_endpoint():
-    """Test endpoint"""
-    return {
-        "test": "success",
-        "vercel": "working",
-        "timestamp": datetime.now().isoformat(),
-        "groq_configured": bool(os.getenv("GROQ_API_KEY"))
-    }
-
-@app.post("/api/chat")
-async def chat_endpoint(message: ChatMessage):
-    """Chat endpoint for research queries"""
-    try:
-        # Basic response for now
-        response = {
-            "response": f"Received your message: {message.message}",
-            "chat_id": message.chat_id or "default",
-            "timestamp": datetime.now().isoformat(),
-            "status": "success"
-        }
-        return response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/research")
-async def research_endpoint(query: ResearchQuery):
-    """Research endpoint"""
-    try:
-        response = {
-            "query": query.query,
-            "depth": query.depth,
-            "result": f"Research query received: {query.query}",
-            "timestamp": datetime.now().isoformat(),
-            "status": "success"
-        }
-        return response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Error handler
-@app.exception_handler(404)
-async def not_found_handler(request: Request, exc: HTTPException):
-    return JSONResponse(
-        status_code=404,
-        content={
-            "error": "Not Found",
-            "message": f"Path {request.url.path} not found",
-            "available_endpoints": ["/", "/health", "/test", "/api/chat", "/api/research"],
-            "timestamp": datetime.now().isoformat()
-        }
-    )
-
-# Vercel handler - This is important for Vercel deployment
-handler = app
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.handle_request('GET')
+    
+    def do_POST(self):
+        self.handle_request('POST')
+    
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.end_headers()
+    
+    def handle_request(self, method):
+        try:
+            # Parse the URL
+            parsed_url = urlparse(self.path)
+            path = parsed_url.path
+            query_params = parse_qs(parsed_url.query)
+            
+            # Get request body for POST requests
+            request_data = {}
+            if method == 'POST':
+                content_length = int(self.headers.get('Content-Length', 0))
+                if content_length > 0:
+                    body = self.rfile.read(content_length).decode('utf-8')
+                    try:
+                        request_data = json.loads(body)
+                    except:
+                        request_data = {}
+            
+            # Route the request
+            response_data = self.route_request(path, method, request_data, query_params)
+            
+            # Send response
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+            self.end_headers()
+            
+            self.wfile.write(json.dumps(response_data, indent=2).encode())
+            
+        except Exception as e:
+            self.send_error(500, f"Internal Server Error: {str(e)}")
+    
+    def route_request(self, path, method, data, query):
+        """Route requests to appropriate handlers"""
+        
+        # Normalize path
+        if path.endswith('/'):
+            path = path[:-1]
+        
+        if path == '' or path == '/api':
+            return {
+                'message': 'Deep Researcher Agent API',
+                'status': 'active',
+                'timestamp': datetime.now().isoformat(),
+                'version': '1.0.0',
+                'endpoints': ['/api', '/api/health', '/api/test', '/api/chat', '/api/research']
+            }
+        
+        elif path == '/api/health' or path == '/health':
+            return {
+                'status': 'healthy',
+                'timestamp': datetime.now().isoformat(),
+                'service': 'Deep Researcher Agent'
+            }
+        
+        elif path == '/api/test' or path == '/test':
+            return {
+                'test': 'success',
+                'vercel': 'working',
+                'timestamp': datetime.now().isoformat(),
+                'method': method,
+                'path': path
+            }
+        
+        elif path == '/api/chat':
+            if method == 'POST':
+                return {
+                    'response': f"Chat received: {data.get('message', 'No message')}",
+                    'chat_id': data.get('chat_id', 'default'),
+                    'timestamp': datetime.now().isoformat(),
+                    'status': 'success'
+                }
+            else:
+                return {'error': 'Use POST method', 'allowed_methods': ['POST']}
+        
+        elif path == '/api/research':
+            if method == 'POST':
+                return {
+                    'query': data.get('query', 'No query'),
+                    'depth': data.get('depth', 'deep'),
+                    'result': f"Research query: {data.get('query', 'No query')}",
+                    'timestamp': datetime.now().isoformat(),
+                    'status': 'success'
+                }
+            else:
+                return {'error': 'Use POST method', 'allowed_methods': ['POST']}
+        
+        else:
+            return {
+                'error': 'Not Found',
+                'message': f'Path {path} not found',
+                'available_endpoints': ['/api', '/api/health', '/api/test', '/api/chat', '/api/research'],
+                'timestamp': datetime.now().isoformat()
+            }

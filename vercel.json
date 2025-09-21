@@ -1,20 +1,11 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "static/**/*",
-      "use": "@vercel/static"
+  "functions": {
+    "api/index.py": {
+      "runtime": "python3.9"
     }
-  ],
+  },
   "routes": [
-    {
-      "src": "/",
-      "dest": "/static/index.html"
-    },
     {
       "src": "/api/(.*)",
       "dest": "/api/index.py"
@@ -22,6 +13,10 @@
     {
       "src": "/(health|test)",
       "dest": "/api/index.py"
+    },
+    {
+      "src": "/",
+      "dest": "/static/index.html"
     }
   ]
 }
